@@ -18,6 +18,8 @@ var REPOS = [
 
 var PROJECT_NAMES = ['co-co', 'dating-app-support', 'leaning-x', '個人'];
 
+var GITHUB_OWNER = 'kochan17';
+
 var GITHUB_GRAPHQL_URL = 'https://api.github.com/graphql';
 
 /**

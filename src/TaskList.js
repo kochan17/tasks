@@ -51,9 +51,9 @@ function syncGitHubTasks() {
   // GitHubからタスク取得
   var githubTasks = [];
 
-  // まず Projects V2 から取得
+  // 1. Projects V2 から取得（プロジェクトに登録されたタスクを取得）
   try {
-    var projects = fetchAllProjectItems('kochan17');
+    var projects = fetchAllProjectItems(GITHUB_OWNER);
     for (var p = 0; p < projects.length; p++) {
       var items = projects[p].items.nodes;
       for (var i = 0; i < items.length; i++) {
@@ -64,26 +64,26 @@ function syncGitHubTasks() {
       }
     }
   } catch (e) {
-    Logger.log('Projects V2 の取得に失敗。リポジトリの Issue から取得します: ' + e.message);
+    Logger.log('Projects V2 の取得をスキップ: ' + e.message);
+  }
 
-    // フォールバック：各リポジトリの Issue から取得
-    for (var r = 0; r < REPOS.length; r++) {
-      try {
-        var issues = fetchRepoIssues(REPOS[r].owner, REPOS[r].repo);
-        for (var j = 0; j < issues.length; j++) {
-          var issue = issues[j];
-          githubTasks.push({
-            project: REPOS[r].repo,
-            title: issue.title,
-            deadline: issue.milestone ? issue.milestone.dueOn : '',
-            status: getStatusFromLabels(issue.labels.nodes),
-            source: 'GitHub',
-            url: issue.url
-          });
-        }
-      } catch (repoErr) {
-        Logger.log(REPOS[r].repo + ' の取得に失敗: ' + repoErr.message);
+  // 2. 各リポジトリから直接 Issue を取得（Projects V2 に登録されていない Issue も拾う）
+  for (var r = 0; r < REPOS.length; r++) {
+    try {
+      var issues = fetchRepoIssues(REPOS[r].owner, REPOS[r].repo);
+      for (var j = 0; j < issues.length; j++) {
+        var issue = issues[j];
+        githubTasks.push({
+          project: REPOS[r].repo,
+          title: issue.title,
+          deadline: issue.milestone ? issue.milestone.dueOn : '',
+          status: getStatusFromLabels(issue.labels.nodes),
+          source: 'GitHub',
+          url: issue.url
+        });
       }
+    } catch (repoErr) {
+      Logger.log(REPOS[r].repo + ' の取得に失敗: ' + repoErr.message);
     }
   }
 
