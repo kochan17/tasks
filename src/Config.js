@@ -10,17 +10,77 @@ var SHEET_NAMES = {
   DASHBOARD: 'ダッシュボード'
 };
 
-var REPOS = [
-  { owner: 'kochan17', repo: 'dating-app-support' },
-  { owner: 'kochan17', repo: 'leaning-x' },
-  { owner: 'kochan17', repo: 'co-co' }
-];
-
-var PROJECT_NAMES = ['co-co', 'dating-app-support', 'leaning-x', '個人'];
-
-var GITHUB_OWNER = 'kochan17';
-
 var GITHUB_GRAPHQL_URL = 'https://api.github.com/graphql';
+
+/**
+ * 案件設定シートから GitHub リポジトリ一覧を取得
+ * URL が空の行はスキップ（「個人」など）
+ * 返り値: [{ owner: 'kochan17', repo: 'co-co' }, ...]
+ */
+function getReposFromSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(SHEET_NAMES.PROJECT_SETTINGS);
+  if (!sheet) return [];
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return [];
+
+  // 列: [0]プロジェクト名, [1]GitHub URL
+  var data = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
+  var repos = [];
+
+  for (var i = 0; i < data.length; i++) {
+    var url = data[i][1];
+    if (!url || url === '') continue;
+
+    var parsed = parseGitHubUrl(url);
+    if (parsed) {
+      repos.push(parsed);
+    }
+  }
+
+  return repos;
+}
+
+/**
+ * 案件設定シートからプロジェクト名一覧を取得
+ * 返り値: ['co-co', 'dating-app-support', ...]
+ */
+function getProjectNamesFromSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(SHEET_NAMES.PROJECT_SETTINGS);
+  if (!sheet) return [];
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return [];
+
+  var data = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+  var names = [];
+
+  for (var i = 0; i < data.length; i++) {
+    if (data[i][0] && data[i][0] !== '') {
+      names.push(data[i][0]);
+    }
+  }
+
+  return names;
+}
+
+/**
+ * GitHub URL から owner と repo を抽出する
+ * 例: 'https://github.com/kochan17/co-co' -> { owner: 'kochan17', repo: 'co-co' }
+ */
+function parseGitHubUrl(url) {
+  var str = String(url).trim();
+  // 末尾のスラッシュや .git を除去
+  str = str.replace(/\/+$/, '').replace(/\.git$/, '');
+
+  var match = str.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+  if (match) {
+    return { owner: match[1], repo: match[2] };
+  }
+  return null;
+}
 
 /**
  * GitHub Token を取得（Script Properties から）

@@ -3,28 +3,28 @@
  */
 function setupProjectSettingsSheet() {
   var sheet = getOrCreateSheet(SHEET_NAMES.PROJECT_SETTINGS);
-  var headers = ['プロジェクト名', '報酬額（税抜）', '種別', '備考'];
+  var headers = ['プロジェクト名', 'GitHub URL', '報酬額（税抜）', '種別', '備考'];
   setHeaders(sheet, headers);
 
   // 初期データ
   var projects = [
-    ['co-co', '', '受託', '案件ごとに報酬額を入力'],
-    ['dating-app-support', '', '自社', ''],
-    ['leaning-x', '', '自社', ''],
-    ['個人', '', '個人', '']
+    ['co-co', 'https://github.com/kochan17/co-co', '', '受託', '案件ごとに報酬額を入力'],
+    ['dating-app-support', 'https://github.com/kochan17/dating-app-support', '', '自社', ''],
+    ['leaning-x', 'https://github.com/kochan17/leaning-x', '', '自社', ''],
+    ['個人', '', '', '個人', '']
   ];
 
   sheet.getRange(2, 1, projects.length, projects[0].length).setValues(projects);
 
   // 報酬列のフォーマット
-  sheet.getRange('B2:B100').setNumberFormat('¥#,##0');
+  sheet.getRange('C2:C100').setNumberFormat('¥#,##0');
 
   // 種別ドロップダウン
   var typeRule = SpreadsheetApp.newDataValidation()
     .requireValueInList(['受託', '自社', '個人'], true)
     .setAllowInvalid(true)
     .build();
-  sheet.getRange('C2:C100').setDataValidation(typeRule);
+  sheet.getRange('D2:D100').setDataValidation(typeRule);
 
   autoResizeColumns(sheet);
 }
@@ -93,10 +93,10 @@ function updateDashboard() {
 
   var logData = logSheet.getRange(2, 1, logLastRow - 1, 8).getValues();
 
-  // 案件設定データを取得
+  // 案件設定データを取得（列: プロジェクト名, GitHub URL, 報酬額, 種別, 備考）
   var settingsLastRow = settingsSheet.getLastRow();
   var settingsData = settingsLastRow > 1
-    ? settingsSheet.getRange(2, 1, settingsLastRow - 1, 4).getValues()
+    ? settingsSheet.getRange(2, 1, settingsLastRow - 1, 5).getValues()
     : [];
 
   // プロジェクトごとに集計
@@ -124,13 +124,13 @@ function updateDashboard() {
     projectStats[project].taskCount++;
   }
 
-  // 報酬マップ作成
+  // 報酬マップ作成（列: [0]プロジェクト名, [1]GitHub URL, [2]報酬額, [3]種別）
   var revenueMap = {};
   var typeMap = {};
   for (var s = 0; s < settingsData.length; s++) {
     if (settingsData[s][0]) {
-      revenueMap[settingsData[s][0]] = settingsData[s][1] || 0;
-      typeMap[settingsData[s][0]] = settingsData[s][2] || '';
+      revenueMap[settingsData[s][0]] = settingsData[s][2] || 0;
+      typeMap[settingsData[s][0]] = settingsData[s][3] || '';
     }
   }
 

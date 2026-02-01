@@ -31,9 +31,13 @@ function setupWorkLogSheet() {
   sheet.getRange('E2:F' + maxRow).setNumberFormat('HH:mm');
   sheet.getRange('G2:G' + maxRow).setNumberFormat('[h]:mm');
 
-  // プロジェクト名のドロップダウン
+  // プロジェクト名のドロップダウン（案件設定シートから動的に取得）
+  var projectNames = getProjectNamesFromSheet();
+  if (projectNames.length === 0) {
+    projectNames = ['co-co', 'dating-app-support', 'leaning-x', '個人'];
+  }
   var projectRule = SpreadsheetApp.newDataValidation()
-    .requireValueInList(PROJECT_NAMES, true)
+    .requireValueInList(projectNames, true)
     .setAllowInvalid(true)
     .build();
   sheet.getRange('C2:C' + maxRow).setDataValidation(projectRule);

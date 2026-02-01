@@ -14,9 +14,13 @@ function setupTaskListSheet() {
   sheet.setColumnWidth(5, 80);
   sheet.setColumnWidth(6, 250);
 
-  // プロジェクト名のドロップダウン
+  // プロジェクト名のドロップダウン（案件設定シートから動的に取得）
+  var projectNames = getProjectNamesFromSheet();
+  if (projectNames.length === 0) {
+    projectNames = ['co-co', 'dating-app-support', 'leaning-x', '個人'];
+  }
   var projectRule = SpreadsheetApp.newDataValidation()
-    .requireValueInList(PROJECT_NAMES, true)
+    .requireValueInList(projectNames, true)
     .setAllowInvalid(true)
     .build();
   sheet.getRange('A2:A500').setDataValidation(projectRule);
@@ -67,14 +71,15 @@ function syncGitHubTasks() {
     Logger.log('Projects V2 の取得をスキップ: ' + e.message);
   }
 
-  // 2. 各リポジトリから直接 Issue を取得（Projects V2 に登録されていない Issue も拾う）
-  for (var r = 0; r < REPOS.length; r++) {
+  // 2. 案件設定シートに登録されたリポジトリから直接 Issue を取得
+  var repos = getReposFromSheet();
+  for (var r = 0; r < repos.length; r++) {
     try {
-      var issues = fetchRepoIssues(REPOS[r].owner, REPOS[r].repo);
+      var issues = fetchRepoIssues(repos[r].owner, repos[r].repo);
       for (var j = 0; j < issues.length; j++) {
         var issue = issues[j];
         githubTasks.push({
-          project: REPOS[r].repo,
+          project: repos[r].repo,
           title: issue.title,
           deadline: issue.milestone ? issue.milestone.dueOn : '',
           status: getStatusFromLabels(issue.labels.nodes),
@@ -83,7 +88,7 @@ function syncGitHubTasks() {
         });
       }
     } catch (repoErr) {
-      Logger.log(REPOS[r].repo + ' の取得に失敗: ' + repoErr.message);
+      Logger.log(repos[r].repo + ' の取得に失敗: ' + repoErr.message);
     }
   }
 
