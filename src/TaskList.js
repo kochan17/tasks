@@ -55,23 +55,7 @@ function syncGitHubTasks() {
   // GitHubからタスク取得
   var githubTasks = [];
 
-  // 1. Projects V2 から取得（プロジェクトに登録されたタスクを取得）
-  try {
-    var projects = fetchAllProjectItems(GITHUB_OWNER);
-    for (var p = 0; p < projects.length; p++) {
-      var items = projects[p].items.nodes;
-      for (var i = 0; i < items.length; i++) {
-        var task = parseProjectItem(items[i], projects[p].title);
-        if (task) {
-          githubTasks.push(task);
-        }
-      }
-    }
-  } catch (e) {
-    Logger.log('Projects V2 の取得をスキップ: ' + e.message);
-  }
-
-  // 2. 案件設定シートに登録されたリポジトリから直接 Issue を取得
+  // 案件設定シートに登録されたリポジトリから Issue を取得
   var repos = getReposFromSheet();
   for (var r = 0; r < repos.length; r++) {
     try {
